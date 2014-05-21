@@ -2,23 +2,23 @@ require 'rake'
 
 module Rake
 	module Leaves
-		# Set the required task arguments
-		def required_args (*args)
-			Rake.application.last_required_args = args
+		# Define required task parameters
+		def params (*params)
+			Rake.application.last_required_params = params
 		end
 
-		# Set the optional task arguments
-		def optional_args (args)
-			Rake.application.last_optional_args = args
+		# Define optional task parameters
+		def optional_params (params)
+			Rake.application.last_optional_params = params
 		end
 
-		# Alias a task argument
-		def alias_arg (new_name, original_name)
+		# Alias a task parameter
+		def alias_param (new_name, original_name)
 			original_name = original_name.to_sym
-			aliases = Rake.application.last_arg_aliases
+			aliases = Rake.application.last_param_aliases
 			aliases[original_name] ||= []
 			aliases[original_name].push new_name
-			Rake.application.last_arg_aliases = aliases
+			Rake.application.last_param_aliases = aliases
 		end
 	end
 
@@ -36,53 +36,53 @@ module Rake
 		# Gathers and returns all args for the task. Missing required args are
 		# requested via standard in
 		def args
-			@args ||= required_args
-				.merge(optional_args)
+			@args ||= required_params
+				.merge(optional_params)
 				.inject({}) do |args, (name, default)|
-					arg_aliases[name].reverse.each { |alias_name|
+					param_aliases[name].reverse.each { |alias_name|
 						args[name] ||= ENV[alias_name.to_s]
-					} if arg_aliases[name]
+					} if param_aliases[name]
 					args[name] ||= ENV[name.to_s] || default
 					args[name] = request_argument name if
-						args[name].nil? && required_args.keys.include?(name)
+						args[name].nil? && required_params.keys.include?(name)
 					args
 				end
 		end
 
 		# Add a required argument to the task
-		def add_required_arg (name)
-			required_args[name.to_sym] = nil
+		def add_required_param (name)
+			required_params[name.to_sym] = nil
 		end
 
 		# Add an optional argument to the task (along with an optional default)
-		def add_optional_arg (name, default = nil)
-			optional_args[name.to_sym] = default
+		def add_optional_param (name, default = nil)
+			optional_params[name.to_sym] = default
 		end
 
 		# Alias a task argument (same usage as alias_method)
-		def add_arg_alias (new_name, original_name)
-			arg_aliases[original_name.to_sym] ||= []
-			arg_aliases[original_name.to_sym].push new_name.to_sym
+		def add_param_alias (new_name, original_name)
+			param_aliases[original_name.to_sym] ||= []
+			param_aliases[original_name.to_sym].push new_name.to_sym
 		end
 
 		private
 
-		# required_args getter, cleaner than aliasing initialize to set
+		# required_params getter, cleaner than aliasing initialize to set
 		# the default value
-		def required_args
-			@required_args ||= {}
+		def required_params
+			@required_params ||= {}
 		end
 
-		# optional_args getter, cleaner than aliasing initialize to set
+		# optional_params getter, cleaner than aliasing initialize to set
 		# the default value
-		def optional_args
-			@optional_args ||= {}
+		def optional_params
+			@optional_params ||= {}
 		end
 
-		# arg_aliases getter, cleaner than aliasing initialize to set
+		# param_aliases getter, cleaner than aliasing initialize to set
 		# the default value
-		def arg_aliases
-			@arg_aliases ||= {}
+		def param_aliases
+			@param_aliases ||= {}
 		end
 
 		# Request an argument from the user via standard in
@@ -93,54 +93,54 @@ module Rake
 	end
 
 	module TaskManager
-		attr_writer :last_required_args, :last_optional_args, :last_arg_aliases
+		attr_writer :last_required_params, :last_optional_params, :last_param_aliases
 		
 		alias_method :original_intern, :intern
 
 		# Add arguments to the task immediately after creating it
 		def intern (*args)
 			task = original_intern *args
-			add_args task
+			add_params task
 			task
 		end
 
-		# last_required_args getter, cleaner than aliasing initialize to set
+		# last_required_params getter, cleaner than aliasing initialize to set
 		# the default value
-		def last_required_args
-			@last_required_args ||= {}
+		def last_required_params
+			@last_required_params ||= {}
 		end
 
-		# last_optional_args getter, cleaner than aliasing initialize to set
+		# last_optional_params getter, cleaner than aliasing initialize to set
 		# the default value
-		def last_optional_args
-			@last_optional_args ||= {}
+		def last_optional_params
+			@last_optional_params ||= {}
 		end
 
-		# last_arg_aliases getter, cleaner than aliasing initialize to set
+		# last_param_aliases getter, cleaner than aliasing initialize to set
 		# the default value
-		def last_arg_aliases
-			@last_arg_aliases ||= {}
+		def last_param_aliases
+			@last_param_aliases ||= {}
 		end
 		
 		private
 
-		# Add arguments to a task based on the last values set (and then clear
-		# the last values so they don't affect the next task)
-		def add_args (task)
-			last_required_args.each { |arg|
-				task.add_required_arg arg
+		# Add parameters to a task based on the last parameters defined (and then clear
+		# the last parameters so they don't affect the next task)
+		def add_params (task)
+			last_required_params.each { |arg|
+				task.add_required_param arg
 			}
-			last_optional_args.each { |arg, default|
-				task.add_optional_arg arg, default
+			last_optional_params.each { |arg, default|
+				task.add_optional_param arg, default
 			}
-			last_arg_aliases.each { |original_name, new_names|
+			last_param_aliases.each { |original_name, new_names|
 				new_names.each { |new_name|
-					task.add_arg_alias new_name, original_name
+					task.add_param_alias new_name, original_name
 				}
 			}
-			@last_required_args = nil
-			@last_optional_args = nil
-			@last_arg_aliases = nil
+			@last_required_params = nil
+			@last_optional_params = nil
+			@last_param_aliases = nil
 		end
 	end
 
