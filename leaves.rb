@@ -1,6 +1,27 @@
 require 'rake'
 
 module Rake
+	module Leaves
+		# Set the required task arguments
+		def required_args (*args)
+			Rake.application.last_required_args = args
+		end
+
+		# Set the optional task arguments
+		def optional_args (args)
+			Rake.application.last_optional_args = args
+		end
+
+		# Alias a task argument
+		def alias_arg (new_name, original_name)
+			original_name = original_name.to_sym
+			aliases = Rake.application.last_arg_aliases
+			aliases[original_name] ||= []
+			aliases[original_name].push new_name
+			Rake.application.last_arg_aliases = aliases
+		end
+	end
+
 	class Task
 
 		alias_method :original_invoke_with_call_chain, :invoke_with_call_chain
@@ -124,26 +145,7 @@ module Rake
 	end
 
 	module DSL
-
-		private
-
-		# Set the required task arguments
-		def required_args (*args)
-			Rake.application.last_required_args = args
-		end
-
-		# Set the optional task arguments
-		def optional_args (args)
-			Rake.application.last_optional_args = args
-		end
-
-		# Alias a task argument
-		def alias_arg (new_name, original_name)
-			original_name = original_name.to_sym
-			aliases = Rake.application.last_arg_aliases
-			aliases[original_name] ||= []
-			aliases[original_name].push new_name
-			Rake.application.last_arg_aliases = aliases
-		end
+		include Leaves
+    	private(*Leaves.instance_methods(false))
 	end
 end
