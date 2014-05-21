@@ -88,7 +88,7 @@ module Rake
 		# Request an argument from the user via standard in
 		def request_argument  (name)
 			STDOUT.print "#{@name} requires #{name}: "
-  			ENV[name.to_s] = STDIN.gets.strip
+			ENV[name.to_s] = STDIN.gets.strip
 		end
 	end
 
@@ -145,7 +145,9 @@ module Rake
 	end
 
 	module DSL
+
+		# Include the new methods that should accessible globally
 		include Leaves
-    	private(*Leaves.instance_methods(false))
+		private(*Leaves.instance_methods(false))
 	end
 end
