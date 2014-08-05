@@ -1,11 +1,16 @@
-require 'rake'
+#--
+# Copyright (c) 2014 Elliot Dickison
+#
+# This source code is released under the WTFPL License.
+#++
 
 module Rake
 	module Leaves
+
 		# Define required task parameters
 		def params (*params)
 			Rake.application.last_required_params = params
-		end
+		end			
 
 		# Define optional task parameters
 		def optional_params (params)
@@ -21,7 +26,7 @@ module Rake
 			Rake.application.last_param_aliases = aliases
 		end
 
-		# Allow the task to request missing arguments from the user
+		# Allow the task to request missing [required] arguments from the user
 		def request_missing_params
 			Rake.application.last_request_missing_params = true
 		end
@@ -30,6 +35,7 @@ module Rake
 	class Task
 
 		attr_writer :request_missing_params
+
 		alias_method :original_invoke_with_call_chain, :invoke_with_call_chain
 
 		# Call self.args in self.invoke_with_call_chain so that all the arg
@@ -117,9 +123,10 @@ module Rake
 	end
 
 	module TaskManager
+
 		attr_writer :last_required_params, :last_optional_params, :last_param_aliases,
 			:last_request_missing_params
-		
+
 		alias_method :original_intern, :intern
 
 		# Add arguments to the task immediately after creating it
@@ -152,18 +159,23 @@ module Rake
 		# Add parameters to a task based on the last parameters defined (and then clear
 		# the last parameters so they don't affect the next task)
 		def add_params (task)
+
 			last_required_params.each { |arg|
 				task.add_required_param arg
 			}
+
 			last_optional_params.each { |arg, default|
 				task.add_optional_param arg, default
 			}
+
 			last_param_aliases.each { |original_name, new_names|
 				new_names.each { |new_name|
 					task.add_param_alias new_name, original_name
 				}
 			}
+
 			task.request_missing_params = @last_request_missing_params
+			
 			@last_required_params = nil
 			@last_optional_params = nil
 			@last_param_aliases = nil
